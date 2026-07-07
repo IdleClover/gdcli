@@ -1,9 +1,8 @@
 use std::env;
+use git2::{Cred, RemoteCallbacks};
+use log::warn;
 
-use clap::builder;
-use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, build::RepoBuilder};
-
-use crate::{cli::NewArgs, error::Result};
+use crate::{cli::NewArgs, error::Result, template::clone_repository};
 
 enum UrlKind {
     Http,
@@ -22,17 +21,22 @@ fn classify_url(url: &str) -> UrlKind {
 }
 
 pub fn new(args: NewArgs) -> Result<()> {
-    match classify_url(&args.template) {
-        UrlKind::Http => new_http(args),
-        UrlKind::Ssh => new_ssh(args),
-        UrlKind::Invalid => Err(format!("Invalid template url: '{}'", args.template).into())
-    }
+    let name = &args.name;
+    let url = &args.template;
+    let version = &args.version;
+    let path = args.get_path()?;
+
+    let callbacks: RemoteCallbacks = match classify_url(&args.template) {
+        UrlKind::Http => http_callbacks(),
+        UrlKind::Ssh => ssh_callbacks(),
+        UrlKind::Invalid => return Err(format!("Invalid template url: '{}'", args.template).into())
+    };
+
+    clone_repository(url, &path, callbacks, version)
 }
 
 
-fn new_http(args: NewArgs) -> Result<()> {
-    let url = &args.template;
-
+fn http_callbacks<'a>() -> RemoteCallbacks<'a> {
     let token = env::var("GITHUB_TOKEN");
 
     let mut callbacks = RemoteCallbacks::new();
@@ -40,36 +44,19 @@ fn new_http(args: NewArgs) -> Result<()> {
         if let Ok(token) = &token {
             Cred::userpass_plaintext("", &token)
         } else {
+            warn!("An HTTP URL was provided, but the GITHUB_TOKEN environment variable is empty. If the repository is private, it cannot be cloned");
             Cred::userpass_plaintext("", "")
         }
     });
 
-    let mut fo = FetchOptions::new();
-    fo.remote_callbacks(callbacks);
-
-    let mut builder = RepoBuilder::new();
-    builder.fetch_options(fo);
-
-    let repository = builder.clone(url, args.get_path()?.as_ref())?;
-
-    Ok(())
+    callbacks
 }
 
-fn new_ssh(args: NewArgs) -> Result<()> {
-    let url = &args.template;
-
+fn ssh_callbacks<'a>() -> RemoteCallbacks<'a> {
     let mut callbacks = RemoteCallbacks::new();
     callbacks.credentials(|_url, username_from_url, _allowed_types| {
         Cred::ssh_key_from_agent(username_from_url.unwrap_or("git"))
     });
 
-    let mut fo = FetchOptions::new();
-    fo.remote_callbacks(callbacks);
-
-    let mut builder = RepoBuilder::new();
-    builder.fetch_options(fo);
-
-    let repository = builder.clone(url, args.get_path()?.as_ref())?;
-
-    Ok(())
+    callbacks
 }
