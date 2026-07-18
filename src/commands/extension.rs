@@ -32,7 +32,9 @@ pub fn new(args: NewArgs) -> Result<()> {
         UrlKind::Invalid => return Err(format!("Invalid template url: '{}'", args.template).into())
     };
 
-    clone_repository(url, &path, callbacks, version)
+    clone_repository(url, &path, callbacks, version, &[
+        ("EXTENSION-NAME", name.as_str()),
+    ])
 }
 
 

@@ -5,6 +5,7 @@ use gdcli::commands::{game, extension};
 use gdcli::error::Result;
 
 fn main() -> Result<()> {
+    env_logger::init();
     let cli = Cli::parse();
     
     run(cli)?;
