@@ -1,6 +1,7 @@
 use std::{env, path::PathBuf};
 
 use clap::{Args, Parser, Subcommand};
+use clap_complete::Shell;
 
 use crate::error::Result;
 
@@ -26,6 +27,11 @@ pub enum Commands {
     Game {
         #[command(subcommand)]
         action: GameCommands
+    },
+    Completions {
+        shell: Option<Shell>,
+        #[arg(short, long)]
+        install: bool,
     },
 }
 
