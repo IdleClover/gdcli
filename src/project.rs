@@ -5,7 +5,6 @@ pub mod game;
 
 pub struct Project {
     pub name: String,
-    pub version: String,
 }
 
 pub trait HasProject {
@@ -14,10 +13,6 @@ pub trait HasProject {
 
     fn name(&self) -> &str {
         &self.base().name
-    }
-
-    fn version(&self) -> &str {
-        &self.base().version
     }
 
     fn post_installation(&self) -> Result<()> {
