@@ -1,8 +1,11 @@
 use std::path::Path;
 
-use indicatif::ProgressStyle;
-
-use crate::{error::Result, git, project::{HasProject, Project}};
+use crate::{
+    error::Result,
+    git,
+    project::{HasProject, Project},
+    ui::RepositoryProgressBar,
+};
 
 pub struct GdextProject {
     pub base: Project,
@@ -13,7 +16,7 @@ impl GdextProject {
     fn new(name: String) -> Self {
         GdextProject {
             base: Project { name: name },
-            target: GdextTarget::Editor
+            target: GdextTarget::Editor,
         }
     }
 }
@@ -31,26 +34,16 @@ impl HasProject for GdextProject {
 pub enum GdextTarget {
     Editor,
     Runtime,
-    Both
+    Both,
 }
 
 pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Result<GdextProject> {
-    let pb = indicatif::ProgressBar::new(1);
-    pb.set_style(
-        ProgressStyle::with_template(
-            "{msg} [{bar:40.cyan/blue}] {pos}/{len} objets ({eta})",
-        )
-        .unwrap()
-        .progress_chars("=>-"),
-    );
-    pb.set_message("Cloning template");
-
     git::clone(
         url,
         dest,
         version,
-        &[("EXTENSION-NAME", &name),],
-        &pb
+        &[("EXTENSION-NAME", &name)],
+        RepositoryProgressBar::new(url.to_string()),
     )?;
 
     Ok(GdextProject::new(name))

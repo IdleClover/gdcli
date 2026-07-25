@@ -1,9 +1,7 @@
-use indicatif::ProgressBar;
+use crate::error::Result;
 
-use crate::{error::Result, git::CloneProgress};
-
-pub mod gdext;
 pub mod game;
+pub mod gdext;
 
 pub struct Project {
     pub name: String,
@@ -19,16 +17,5 @@ pub trait HasProject {
 
     fn post_installation(&self) -> Result<()> {
         Ok(())
-    }
-}
-
-impl CloneProgress for ProgressBar {
-    fn on_transfer(&self, stats: git2::Progress) {
-        self.set_length(stats.total_objects() as u64);
-        self.set_position(stats.received_objects() as u64);
-    }
-    
-    fn finish(&self) {
-        self.finish_with_message("Template cloned");
     }
 }
