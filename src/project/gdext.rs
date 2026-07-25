@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use indicatif::ProgressStyle;
+
 use crate::{error::Result, git, project::{HasProject, Project}};
 
 pub struct GdextProject {
@@ -33,9 +35,23 @@ pub enum GdextTarget {
 }
 
 pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Result<GdextProject> {
-    git::clone(url, dest, version, &[
-        ("EXTENSION-NAME", &name),
-    ])?;
+    let pb = indicatif::ProgressBar::new(1);
+    pb.set_style(
+        ProgressStyle::with_template(
+            "{msg} [{bar:40.cyan/blue}] {pos}/{len} objets ({eta})",
+        )
+        .unwrap()
+        .progress_chars("=>-"),
+    );
+    pb.set_message("Cloning template");
+
+    git::clone(
+        url,
+        dest,
+        version,
+        &[("EXTENSION-NAME", &name),],
+        &pb
+    )?;
 
     Ok(GdextProject::new(name))
 }

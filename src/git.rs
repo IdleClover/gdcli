@@ -1,6 +1,6 @@
 use std::{env, error::Error, fs, path::Path};
 
-use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, build::RepoBuilder};
+use git2::{Cred, FetchOptions, Progress, RemoteCallbacks, Repository, build::RepoBuilder};
 use walkdir::WalkDir;
 
 use crate::error::Result;
@@ -13,6 +13,10 @@ enum UrlKind {
     Invalid,
 }
 
+pub trait CloneProgress {
+    fn on_transfer(&self, stats: Progress);
+    fn finish(&self);
+}
 
 fn classify_url(url: &str) -> UrlKind {
     if url.starts_with("http://") || url.starts_with("https://") {
@@ -25,21 +29,30 @@ fn classify_url(url: &str) -> UrlKind {
 }
 
 
-pub fn clone(url: &str, dest: &Path, branch: Option<&str>, replacements: &[(&str, &str)]) -> Result<Repository> {
-    let callbacks: RemoteCallbacks = match classify_url(url) {
+pub fn clone(
+    url: &str,
+    dest: &Path,
+    branch: Option<&str>,
+    replacements: &[(&str, &str)],
+    progress: &dyn CloneProgress,
+) -> Result<Repository> {
+    let mut callbacks: RemoteCallbacks = match classify_url(url) {
         UrlKind::Http => http_callbacks(),
         UrlKind::Ssh => ssh_callbacks(),
         UrlKind::Invalid => return Err(format!("Invalid template url: '{}'", url).into())
     };
+    
+    callbacks.transfer_progress(|stats| {
+        progress.on_transfer(stats);
+        true
+    });
 
-    clone_repository(url, dest, callbacks, branch, replacements)
-}
-
-
-pub fn clone_repository(url: &str, dest: &Path, callbacks: RemoteCallbacks, branch: Option<&str>, replacements: &[(&str, &str)]) -> Result<Repository> {
     let repository = create_builder(callbacks, branch).clone(url, dest)?;
+    progress.finish();
+
     init_submodules(&repository)?;
     replace_in_files(repository.workdir().ok_or("The repository can't be bare")?, replacements)?;
+
     Ok(repository)
 }
 
@@ -59,6 +72,7 @@ fn http_callbacks<'a>() -> RemoteCallbacks<'a> {
 
     callbacks
 }
+
 
 fn ssh_callbacks<'a>() -> RemoteCallbacks<'a> {
     let mut callbacks = RemoteCallbacks::new();
