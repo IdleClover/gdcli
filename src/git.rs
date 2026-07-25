@@ -1,10 +1,14 @@
-use std::{env, error::Error, fs, path::Path};
+use std::{
+    env,
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use git2::{
     Cred, FetchOptions, Progress, RemoteCallbacks, Repository, SubmoduleUpdateOptions,
     build::RepoBuilder,
 };
-use walkdir::WalkDir;
 
 use crate::{error::Result, ui::RepositoryProgressBar};
 
@@ -53,10 +57,7 @@ pub fn clone(
     progress.finish();
 
     init_submodules(&repository, &progress)?;
-    replace_in_files(
-        repository.workdir().ok_or("The repository can't be bare")?,
-        replacements,
-    )?;
+    replace_in_files(&repository, replacements)?;
 
     Ok(repository)
 }
@@ -86,14 +87,22 @@ fn ssh_callbacks<'a>() -> RemoteCallbacks<'a> {
     callbacks
 }
 
-fn replace_in_files(workdir: &Path, replacements: &[(&str, &str)]) -> Result<()> {
-    let files = WalkDir::new(workdir)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file());
-    for entry in files {
-        let path = entry.path();
+fn replace_in_files(repository: &Repository, replacements: &[(&str, &str)]) -> Result<()> {
+    let root = repository
+        .workdir()
+        .expect("A cloned repository cannot be bare, wtf");
 
+    let files: Vec<PathBuf> = repository
+        .index()?
+        .iter()
+        .filter_map(|e| String::from_utf8(e.path).ok())
+        .map(|p| root.join(PathBuf::from(p)))
+        .filter(|p| p.is_file())
+        .collect();
+
+    log::info!("{} files to read", files.len());
+    for path in &files {
+        log::debug!("Reading {}", path.display());
         // Skip .git directory
         if path.components().any(|c| c.as_os_str() == ".git") {
             continue;
