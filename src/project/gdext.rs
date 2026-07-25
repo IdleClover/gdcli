@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     error::Result,
     git,
@@ -7,15 +9,24 @@ use crate::{
     ui::RepositoryProgressBar,
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct GdextProject {
+    #[serde(rename(serialize = "project", deserialize = "base"))]
     pub base: Project,
     pub target: GdextTarget,
 }
 
+#[derive(Serialize, Deserialize)]
+pub enum GdextTarget {
+    Editor,
+    Runtime,
+    Both,
+}
+
 impl GdextProject {
-    fn new(name: String) -> Self {
+    fn new(name: String, folder: &Path) -> Self {
         GdextProject {
-            base: Project { name: name },
+            base: Project::new(name, folder),
             target: GdextTarget::Editor,
         }
     }
@@ -31,12 +42,6 @@ impl HasProject for GdextProject {
     }
 }
 
-pub enum GdextTarget {
-    Editor,
-    Runtime,
-    Both,
-}
-
 pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Result<GdextProject> {
     git::clone(
         url,
@@ -46,5 +51,5 @@ pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Re
         RepositoryProgressBar::new(url.to_string()),
     )?;
 
-    Ok(GdextProject::new(name))
+    Ok(GdextProject::new(name, dest))
 }
