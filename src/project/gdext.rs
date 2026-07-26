@@ -50,6 +50,5 @@ pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Re
         &[("EXTENSION-NAME", &name)],
         RepositoryProgressBar::new(url.to_string()),
     )?;
-
     Ok(GdextProject::new(name, dest).into())
 }

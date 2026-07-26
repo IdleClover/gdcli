@@ -1,13 +1,18 @@
-use crate::{cli::NewArgs, error::Result, project::gdext};
+use crate::{
+    cli::NewArgs,
+    error::Result,
+    project::{HasProject, gdext},
+};
 
 pub fn new(args: NewArgs) -> Result<()> {
-    gdext::create(
+    let project = gdext::create(
         &args.template,
         &args.get_path()?,
         args.name,
         args.version.as_deref(),
-    )?
-    .save()?;
+    )?;
+    project.save()?;
+    project.commit_all("Setup extension project")?;
 
     Ok(())
 }

@@ -3,11 +3,12 @@ use std::{
     error::Error,
     fs,
     path::{Path, PathBuf},
+    vec,
 };
 
 use git2::{
-    Cred, FetchOptions, Progress, RemoteCallbacks, Repository, SubmoduleUpdateOptions,
-    build::RepoBuilder,
+    Commit, Cred, FetchOptions, IndexAddOption, Progress, RemoteCallbacks, Repository,
+    SubmoduleUpdateOptions, build::RepoBuilder,
 };
 
 use crate::{error::Result, ui::RepositoryProgressBar};
@@ -23,6 +24,43 @@ enum UrlKind {
 pub trait CloneProgress {
     fn on_transfer(&self, stats: Progress);
     fn finish(&self);
+}
+
+pub trait GdCliRepository {
+    fn commit_all(&self, message: &str) -> Result<git2::Oid>;
+}
+
+impl GdCliRepository for Repository {
+    fn commit_all(&self, message: &str) -> Result<git2::Oid> {
+        let mut index = self.index()?;
+        index.add_all(["*"].iter(), IndexAddOption::DEFAULT, None)?;
+        index.write()?;
+
+        let tree_id = index.write_tree()?;
+        let tree = self.find_tree(tree_id)?;
+
+        let signature = self.signature()?;
+
+        let parent_commit = match self.head() {
+            Ok(head) => Some(head.peel_to_commit()?),
+            Err(_) => None,
+        };
+
+        let parents: Vec<&Commit> = match &parent_commit {
+            Some(c) => vec![c],
+            None => vec![],
+        };
+
+        self.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            message,
+            &tree,
+            &parents,
+        )
+        .map_err(|e| format!("Failed to commit: {e}").into())
+    }
 }
 
 fn classify_url(url: &str) -> UrlKind {

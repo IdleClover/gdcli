@@ -1,8 +1,9 @@
 use std::path::{Path, PathBuf};
 
+use git2::{Oid, Repository};
 use serde::{Deserialize, Serialize};
 
-use crate::error::Result;
+use crate::{error::Result, git::GdCliRepository};
 
 pub mod file;
 pub mod game;
@@ -27,6 +28,14 @@ pub trait HasProject {
         &self.base().name
     }
 
+    fn repository(&self) -> Result<Repository> {
+        self.base().repository()
+    }
+
+    fn commit_all(&self, message: &str) -> Result<Oid> {
+        self.base().commit_all(message)
+    }
+
     fn post_installation(&self) -> Result<()> {
         Ok(())
     }
@@ -38,5 +47,14 @@ impl Project {
             name: name,
             path: folder.join("project.gdcli"),
         }
+    }
+
+    pub fn repository(&self) -> Result<Repository> {
+        Repository::open(&self.path.parent().ok_or("Parent not found")?)
+            .map_err(|e| format!("Failed to open {} repository: {e}", self.path.display()).into())
+    }
+
+    pub fn commit_all(&self, message: &str) -> Result<Oid> {
+        self.repository()?.commit_all(message)
     }
 }
