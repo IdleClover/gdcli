@@ -2,8 +2,9 @@ use std::env;
 
 use clap::Parser;
 
-use gdcli::cli::{Cli, Commands, ExtensionCommands, GameCommands};
-use gdcli::commands::{completions, extension, game, info};
+use gdcli::cli::extension::ExtensionCommands;
+use gdcli::cli::game::GameCommands;
+use gdcli::cli::{Cli, Commands, completions, extension, game, info};
 use gdcli::error::Result;
 
 fn main() -> Result<()> {

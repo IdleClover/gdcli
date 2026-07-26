@@ -1,9 +1,17 @@
+pub mod completions;
+pub mod extension;
+pub mod game;
+pub mod info;
+
 use std::{env, path::PathBuf};
 
 use clap::{Args, Parser, Subcommand};
 use clap_complete::Shell;
 
-use crate::error::Result;
+use crate::{
+    cli::{extension::ExtensionCommands, game::GameCommands},
+    error::Result,
+};
 
 fn working_directory() -> String {
     env::current_dir()
@@ -36,16 +44,6 @@ pub enum Commands {
     Info {
         path: Option<PathBuf>,
     },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum ExtensionCommands {
-    New(NewArgs),
-}
-
-#[derive(Subcommand, Debug)]
-pub enum GameCommands {
-    New(NewArgs),
 }
 
 #[derive(Args, Debug)]

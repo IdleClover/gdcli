@@ -1,3 +1,7 @@
+pub mod file;
+pub mod game;
+pub mod gdext;
+
 use std::path::{Path, PathBuf};
 
 use git2::{Oid, Repository};
@@ -5,9 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{error::Result, git::GdCliRepository};
 
-pub mod file;
-pub mod game;
-pub mod gdext;
+const PROJECT_FILENAME: &str = "project.gdcli";
 
 #[derive(Serialize, Deserialize)]
 pub struct Project {
@@ -44,7 +46,7 @@ impl Project {
     pub fn new(name: String, folder: &Path) -> Self {
         Self {
             name: name,
-            path: folder.join("project.gdcli"),
+            path: folder.join(PROJECT_FILENAME),
         }
     }
 }

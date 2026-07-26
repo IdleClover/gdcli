@@ -4,14 +4,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::Result,
-    project::{HasProject, Project, ProjectLike, game::GameProject, gdext::GdextProject},
+    project::{
+        HasProject, PROJECT_FILENAME, Project, ProjectLike, game::GameProject, gdext::GdextProject,
+    },
 };
 
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProjectFile {
     Game(GameProject),
-    Gdext(GdextProject),
+    Extension(GdextProject),
 }
 
 impl ProjectFile {
@@ -26,21 +28,21 @@ impl HasProject for ProjectFile {
     fn base(&self) -> &Project {
         match self {
             ProjectFile::Game(p) => p.base(),
-            ProjectFile::Gdext(p) => p.base(),
+            ProjectFile::Extension(p) => p.base(),
         }
     }
 
     fn base_mut(&mut self) -> &mut Project {
         match self {
             ProjectFile::Game(p) => p.base_mut(),
-            ProjectFile::Gdext(p) => p.base_mut(),
+            ProjectFile::Extension(p) => p.base_mut(),
         }
     }
 
     fn post_installation(&self) -> Result<()> {
         match self {
             ProjectFile::Game(p) => p.post_installation(),
-            ProjectFile::Gdext(p) => p.post_installation(),
+            ProjectFile::Extension(p) => p.post_installation(),
         }
     }
 }
@@ -50,7 +52,7 @@ impl TryFrom<PathBuf> for ProjectFile {
 
     fn try_from(mut path: PathBuf) -> Result<Self> {
         if path.is_dir() {
-            path.push("project.gdcli");
+            path.push(PROJECT_FILENAME);
         }
         let content = fs::read_to_string(&path)?;
         let mut project: ProjectFile = toml::from_str(&content)?;
@@ -67,6 +69,6 @@ impl From<GameProject> for ProjectFile {
 
 impl From<GdextProject> for ProjectFile {
     fn from(value: GdextProject) -> Self {
-        Self::Gdext(value)
+        Self::Extension(value)
     }
 }

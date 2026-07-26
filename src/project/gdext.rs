@@ -17,18 +17,20 @@ pub struct GdextProject {
     pub target: GdextTarget,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, clap::ValueEnum)]
+#[serde(rename_all = "snake_case")]
 pub enum GdextTarget {
     Editor,
+    #[default]
     Runtime,
     Both,
 }
 
 impl GdextProject {
-    fn new(name: String, folder: &Path) -> Self {
+    fn new(name: String, folder: &Path, target: GdextTarget) -> Self {
         GdextProject {
             base: Project::new(name, folder),
-            target: GdextTarget::Editor,
+            target,
         }
     }
 }
@@ -47,12 +49,18 @@ impl HasProject for GdextProject {
     }
 }
 
-pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Result<ProjectFile> {
+pub fn create(
+    url: &str,
+    dest: &Path,
+    name: String,
+    version: Option<&str>,
+    target: GdextTarget,
+) -> Result<ProjectFile> {
     git::clone(
         url,
         dest,
         version,
         RepositoryProgressBar::new(url.to_string()),
     )?;
-    Ok(GdextProject::new(name, dest).into())
+    Ok(GdextProject::new(name, dest, target).into())
 }
