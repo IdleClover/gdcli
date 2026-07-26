@@ -1,7 +1,7 @@
 use crate::{
     cli::NewArgs,
     error::Result,
-    project::{HasProject, gdext},
+    project::{ProjectLike, gdext},
 };
 
 pub fn new(args: NewArgs) -> Result<()> {

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::{
     error::Result,
-    project::{HasProject, file::ProjectFile},
+    project::{ProjectLike, file::ProjectFile},
 };
 
 pub fn inspect(path: PathBuf) -> Result<()> {

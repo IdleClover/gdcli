@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::Result,
-    project::{HasProject, Project, game::GameProject, gdext::GdextProject},
+    project::{HasProject, Project, ProjectLike, game::GameProject, gdext::GdextProject},
 };
 
 #[derive(Serialize, Deserialize)]
