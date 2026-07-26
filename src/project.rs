@@ -29,15 +29,15 @@ pub trait ProjectLike {
     fn commit_all(&self, message: &str) -> Result<Oid> {
         self.repository()?.commit_all(message)
     }
-
-    fn post_installation(&self) -> Result<()> {
-        Ok(())
-    }
 }
 
 pub trait HasProject {
     fn base(&self) -> &Project;
     fn base_mut(&mut self) -> &mut Project;
+
+    fn post_installation(&self) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl Project {

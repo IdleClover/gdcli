@@ -1,7 +1,7 @@
 use crate::{
     cli::NewArgs,
     error::Result,
-    project::{ProjectLike, gdext},
+    project::{HasProject, ProjectLike, gdext},
 };
 
 pub fn new(args: NewArgs) -> Result<()> {
@@ -11,6 +11,7 @@ pub fn new(args: NewArgs) -> Result<()> {
         args.name,
         args.version.as_deref(),
     )?;
+    project.post_installation()?;
     project.save()?;
     project.commit_all("Setup extension project")?;
 
