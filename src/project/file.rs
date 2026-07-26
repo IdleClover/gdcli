@@ -36,6 +36,13 @@ impl HasProject for ProjectFile {
             ProjectFile::Gdext(p) => p.base_mut(),
         }
     }
+
+    fn post_installation(&self) -> Result<()> {
+        match self {
+            ProjectFile::Game(p) => p.post_installation(),
+            ProjectFile::Gdext(p) => p.post_installation(),
+        }
+    }
 }
 
 impl TryFrom<PathBuf> for ProjectFile {
