@@ -22,16 +22,19 @@ pub enum Commands {
     #[command(alias = "ext")]
     Extension {
         #[command(subcommand)]
-        action: ExtensionCommands
+        action: ExtensionCommands,
     },
     Game {
         #[command(subcommand)]
-        action: GameCommands
+        action: GameCommands,
     },
     Completions {
         shell: Option<Shell>,
         #[arg(short, long)]
         install: bool,
+    },
+    Info {
+        path: Option<PathBuf>,
     },
 }
 
@@ -48,14 +51,18 @@ pub enum GameCommands {
 #[derive(Args, Debug)]
 pub struct NewArgs {
     pub name: String,
-    
+
     #[arg(default_value_t = working_directory())]
     pub path: String,
 
     #[arg(short, long)]
     pub version: Option<String>,
 
-    #[arg(short, long, default_value="https://github.com/IdleClover/template-gdext.git")]
+    #[arg(
+        short,
+        long,
+        default_value = "https://github.com/IdleClover/template-gdext.git"
+    )]
     pub template: String,
 }
 

@@ -1,8 +1,4 @@
-use crate::{
-    cli::NewArgs,
-    error::Result,
-    project::{HasProject, gdext},
-};
+use crate::{cli::NewArgs, error::Result, project::gdext};
 
 pub fn new(args: NewArgs) -> Result<()> {
     gdext::create(

@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 use crate::{
     error::Result,
     git,
-    project::{HasProject, Project},
+    project::{HasProject, Project, file::ProjectFile},
     ui::RepositoryProgressBar,
 };
 
 #[derive(Serialize, Deserialize)]
 pub struct GdextProject {
-    #[serde(rename(serialize = "project", deserialize = "base"))]
+    #[serde(rename = "project")]
     pub base: Project,
     pub target: GdextTarget,
 }
@@ -42,7 +42,7 @@ impl HasProject for GdextProject {
     }
 }
 
-pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Result<GdextProject> {
+pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Result<ProjectFile> {
     git::clone(
         url,
         dest,
@@ -51,5 +51,5 @@ pub fn create(url: &str, dest: &Path, name: String, version: Option<&str>) -> Re
         RepositoryProgressBar::new(url.to_string()),
     )?;
 
-    Ok(GdextProject::new(name, dest))
+    Ok(GdextProject::new(name, dest).into())
 }
