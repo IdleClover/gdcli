@@ -1,3 +1,5 @@
+pub mod extension;
+
 use std::{fs, path::PathBuf};
 
 use git2::Repository;

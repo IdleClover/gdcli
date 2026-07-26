@@ -22,6 +22,10 @@ pub trait ProjectLike {
     fn path(&self) -> &PathBuf;
     fn name(&self) -> &str;
 
+    fn dir(&self) -> &Path {
+        self.path().parent().unwrap()
+    }
+
     fn repository(&self) -> Result<Repository> {
         let path = self.path();
         Repository::open(&path.parent().ok_or("Parent not found")?)

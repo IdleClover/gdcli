@@ -6,7 +6,7 @@ use crate::{
     error::Result,
     git,
     project::{HasProject, Project, ProjectLike, file::ProjectFile},
-    template::replace_in_files,
+    template::{extension::ExtensionTemplate, replace_in_files},
     ui::RepositoryProgressBar,
 };
 
@@ -45,7 +45,11 @@ impl HasProject for GdextProject {
     }
 
     fn post_installation(&self) -> Result<()> {
-        replace_in_files(&self.repository()?, &[("EXTENSION-NAME", self.name())])
+        replace_in_files(&self.repository()?, &[("EXTENSION-NAME", self.name())])?;
+
+        let mut template = ExtensionTemplate::open(self.dir().to_path_buf())?;
+        template.rename_gdextension_file(self.name())?;
+        template.save()
     }
 }
 
