@@ -7,7 +7,11 @@ use std::path::{Path, PathBuf};
 use git2::{Oid, Repository};
 use serde::{Deserialize, Serialize};
 
-use crate::{error::Result, git::GdCliRepository};
+use crate::{
+    cli::build::BuildArgs,
+    error::{Result, git::GitError, path::PathError},
+    git::GdCliRepository,
+};
 
 const PROJECT_FILENAME: &str = "project.gdcli";
 
@@ -28,12 +32,14 @@ pub trait ProjectLike {
 
     fn repository(&self) -> Result<Repository> {
         let path = self.path();
-        Repository::open(&path.parent().ok_or("Parent not found")?)
-            .map_err(|e| format!("Failed to open {} repository: {e}", path.display()).into())
+        let repository = Repository::open(path.parent().ok_or(PathError::NoParent(path.clone()))?)
+            .map_err(GitError::from)?;
+        Ok(repository)
     }
 
     fn commit_all(&self, message: &str) -> Result<Oid> {
-        self.repository()?.commit_all(message)
+        let oid = self.repository()?.commit_all(message)?;
+        Ok(oid)
     }
 }
 
@@ -44,12 +50,14 @@ pub trait HasProject {
     fn post_installation(&self) -> Result<()> {
         Ok(())
     }
+
+    fn build(&self, args: BuildArgs) -> Result<()>;
 }
 
 impl Project {
     pub fn new(name: String, folder: &Path) -> Self {
         Self {
-            name: name,
+            name,
             path: folder.join(PROJECT_FILENAME),
         }
     }

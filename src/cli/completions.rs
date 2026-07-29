@@ -1,13 +1,20 @@
-use std::{env, fs::{self, File}, io::Write};
+use std::{
+    env,
+    fs::{self, File},
+    io::Write,
+};
 
 use clap::CommandFactory;
 use clap_complete::{Shell, generate};
 
-use crate::{cli::Cli, error::Result};
+use crate::{
+    cli::Cli,
+    error::{Result, fs::FsError, path::PathError, shell::ShellError},
+};
 
 pub fn handle(shell: Option<Shell>, install: bool) -> Result<()> {
     let shell = shell.or(guess_shell());
-    let shell = shell.ok_or("Shell not found")?;
+    let shell = shell.ok_or(ShellError::NotFound)?;
 
     if !install {
         return generate_gdcli(shell, &mut std::io::stdout());
@@ -15,7 +22,7 @@ pub fn handle(shell: Option<Shell>, install: bool) -> Result<()> {
 
     match shell {
         Shell::Bash => generate_bash(),
-        _ => Err("Auto installation not supported".into())
+        _ => Err(ShellError::AutoInstallationNotSupported.into()),
     }
 }
 
@@ -28,7 +35,7 @@ fn guess_shell() -> Option<Shell> {
         "zsh" => Some(Shell::Zsh),
         "fish" => Some(Shell::Fish),
         "elvish" => Some(Shell::Elvish),
-        _ => None
+        _ => None,
     }
 }
 
@@ -39,9 +46,17 @@ fn generate_gdcli(shell: Shell, buf: &mut dyn Write) -> Result<()> {
 }
 
 fn generate_bash() -> Result<()> {
-    let path = dirs::data_local_dir().ok_or("No local data dir found")?.join("bash-completion/completions/gdcli");
-    fs::create_dir_all(path.parent().ok_or(format!("No parent dir for '{}'", path.display()))?)?;
+    let path = dirs::data_local_dir()
+        .ok_or_else(|| PathError::NotFound("No local data dir found".into()))?
+        .join("bash-completion/completions/gdcli");
 
-    let mut file = File::create(path)?;
+    let parent = path.parent().ok_or(PathError::NoParent(path.clone()))?;
+
+    fs::create_dir_all(parent).map_err(FsError::CreateDirsFailed)?;
+
+    let mut file = File::create(&path).map_err(|e| FsError::CreateFailed {
+        path: path.clone(),
+        source: e,
+    })?;
     generate_gdcli(Shell::Bash, &mut file)
 }

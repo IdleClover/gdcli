@@ -16,4 +16,8 @@ impl HasProject for GameProject {
     fn base_mut(&mut self) -> &mut Project {
         &mut self.base
     }
+
+    fn build(&self, _args: crate::cli::build::BuildArgs) -> crate::error::Result<()> {
+        todo!()
+    }
 }

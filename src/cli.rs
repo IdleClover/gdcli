@@ -1,3 +1,4 @@
+pub mod build;
 pub mod completions;
 pub mod extension;
 pub mod game;
@@ -9,8 +10,8 @@ use clap::{Args, Parser, Subcommand};
 use clap_complete::Shell;
 
 use crate::{
-    cli::{extension::ExtensionCommands, game::GameCommands},
-    error::Result,
+    cli::{build::BuildArgs, extension::ExtensionCommands, game::GameCommands},
+    error::project::{NewError, ProjectError},
 };
 
 fn working_directory() -> String {
@@ -38,11 +39,17 @@ pub enum Commands {
     },
     Completions {
         shell: Option<Shell>,
+
         #[arg(short, long)]
         install: bool,
     },
     Info {
         path: Option<PathBuf>,
+    },
+    Build {
+        path: Option<PathBuf>,
+        #[command(flatten)]
+        args: BuildArgs,
     },
 }
 
@@ -65,21 +72,21 @@ pub struct NewArgs {
 }
 
 impl NewArgs {
-    pub fn get_path(&self) -> Result<PathBuf> {
+    pub fn get_path(&self) -> Result<PathBuf, ProjectError> {
         let path = PathBuf::from(self.path.clone());
         let path = PathBuf::from(working_directory()).join(path);
 
         if !path.exists() {
-            return Err(format!("`{}` don't exist", self.path).into());
+            return Err(NewError::PathNotFound(path).into());
         }
 
         if !path.is_dir() {
-            return Err(format!("`{}` is not a folder", self.path).into());
+            return Err(NewError::NotADirectory(path).into());
         }
 
         let path = path.join(self.name.clone());
         if path.exists() {
-            return Err(format!("`{}` already exists", path.display()).into());
+            return Err(NewError::AlreadyExists(path).into());
         }
 
         Ok(path)

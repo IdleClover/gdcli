@@ -51,6 +51,11 @@ impl HasProject for GdextProject {
         template.rename_gdextension_file(self.name())?;
         template.save()
     }
+
+    fn build(&self, args: crate::cli::build::BuildArgs) -> Result<()> {
+        println!("cc: {}", args.extension_compile_command);
+        Ok(())
+    }
 }
 
 pub fn create(

@@ -1,10 +1,8 @@
-use std::env;
-
 use clap::Parser;
 
 use gdcli::cli::extension::ExtensionCommands;
 use gdcli::cli::game::GameCommands;
-use gdcli::cli::{Cli, Commands, completions, extension, game, info};
+use gdcli::cli::{Cli, Commands, build, completions, extension, game, info};
 use gdcli::error::Result;
 
 fn main() -> Result<()> {
@@ -24,9 +22,7 @@ fn run(cli: Cli) -> Result<()> {
             action: ExtensionCommands::New(args),
         } => extension::new(args),
         Commands::Completions { shell, install } => completions::handle(shell, install),
-        Commands::Info { path } => info::inspect(
-            path.ok_or("Couldn't find current dir, a path must be specified")
-                .or(env::current_dir())?,
-        ),
+        Commands::Info { path } => info::inspect(path),
+        Commands::Build { path, args } => build::handle(path, args),
     }
 }

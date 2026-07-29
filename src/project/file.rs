@@ -1,9 +1,10 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{env, fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::Result,
+    cli::build::BuildArgs,
+    error::{Error, Result, fs::FsError, toml::TomlError},
     project::{
         HasProject, PROJECT_FILENAME, Project, ProjectLike, game::GameProject, gdext::GdextProject,
     },
@@ -18,46 +19,66 @@ pub enum ProjectFile {
 
 impl ProjectFile {
     pub fn save(&self) -> Result<()> {
-        let toml = toml::to_string(&self)?;
-        fs::write(self.path(), toml)?;
+        let toml = toml::to_string(&self).map_err(TomlError::SerializationFailed)?;
+        fs::write(self.path(), toml).map_err(|e| FsError::WriteFailed {
+            path: self.path().clone(),
+            source: e,
+        })?;
         Ok(())
     }
 }
 
+macro_rules! dispatch {
+    ($self:ident.$method:ident($($arg:expr),*)) => {
+        match $self {
+            ProjectFile::Game(p) => p.$method($($arg),*),
+            ProjectFile::Extension(p) => p.$method($($arg),*),
+        }
+    };
+}
+
 impl HasProject for ProjectFile {
     fn base(&self) -> &Project {
-        match self {
-            ProjectFile::Game(p) => p.base(),
-            ProjectFile::Extension(p) => p.base(),
-        }
+        dispatch!(self.base())
     }
 
     fn base_mut(&mut self) -> &mut Project {
-        match self {
-            ProjectFile::Game(p) => p.base_mut(),
-            ProjectFile::Extension(p) => p.base_mut(),
-        }
+        dispatch!(self.base_mut())
     }
 
     fn post_installation(&self) -> Result<()> {
-        match self {
-            ProjectFile::Game(p) => p.post_installation(),
-            ProjectFile::Extension(p) => p.post_installation(),
-        }
+        dispatch!(self.post_installation())
+    }
+
+    fn build(&self, args: BuildArgs) -> Result<()> {
+        dispatch!(self.build(args))
     }
 }
 
 impl TryFrom<PathBuf> for ProjectFile {
-    type Error = Box<dyn Error>;
+    type Error = Error;
 
     fn try_from(mut path: PathBuf) -> Result<Self> {
         if path.is_dir() {
             path.push(PROJECT_FILENAME);
         }
-        let content = fs::read_to_string(&path)?;
-        let mut project: ProjectFile = toml::from_str(&content)?;
+        let content = fs::read_to_string(&path).map_err(|e| FsError::ReadFailed {
+            path: path.clone(),
+            source: e,
+        })?;
+        let mut project: ProjectFile =
+            toml::from_str(&content).map_err(TomlError::DeserializationFailed)?;
         project.base_mut().path = path;
         Ok(project)
+    }
+}
+
+impl TryFrom<Option<PathBuf>> for ProjectFile {
+    type Error = Error;
+
+    fn try_from(value: Option<PathBuf>) -> Result<Self> {
+        let path = value.unwrap_or(env::current_dir().map_err(FsError::CurrentDirUnavailable)?);
+        ProjectFile::try_from(path)
     }
 }
 

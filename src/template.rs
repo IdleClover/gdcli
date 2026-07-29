@@ -4,15 +4,14 @@ use std::{fs, path::PathBuf};
 
 use git2::Repository;
 
-use crate::error::Result;
+use crate::error::{Result, fs::FsError, git::GitError};
 
 pub fn replace_in_files(repository: &Repository, replacements: &[(&str, &str)]) -> Result<()> {
-    let root = repository
-        .workdir()
-        .expect("A cloned repository cannot be bare, wtf");
+    let root = repository.workdir().ok_or(GitError::BareRepository)?;
 
     let files: Vec<PathBuf> = repository
-        .index()?
+        .index()
+        .map_err(GitError::Git2)?
         .iter()
         .filter_map(|e| String::from_utf8(e.path).ok())
         .map(|p| root.join(PathBuf::from(p)))
@@ -38,7 +37,10 @@ pub fn replace_in_files(repository: &Repository, replacements: &[(&str, &str)]) 
         }
 
         if content != original {
-            fs::write(path, content)?;
+            fs::write(path, content).map_err(|e| FsError::WriteFailed {
+                path: path.clone(),
+                source: e,
+            })?;
             log::info!("{} modified", path.display());
         }
     }

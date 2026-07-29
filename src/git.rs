@@ -1,11 +1,11 @@
-use std::{env, error::Error, path::Path, vec};
+use std::{env, path::Path, vec};
 
 use git2::{
     Commit, Cred, FetchOptions, IndexAddOption, Progress, RemoteCallbacks, Repository,
     SubmoduleUpdateOptions, build::RepoBuilder,
 };
 
-use crate::{error::Result, ui::RepositoryProgressBar};
+use crate::{error::git::GitError, ui::RepositoryProgressBar};
 
 const DEPTH: i32 = 1;
 
@@ -21,11 +21,12 @@ pub trait CloneProgress {
 }
 
 pub trait GdCliRepository {
-    fn commit_all(&self, message: &str) -> Result<git2::Oid>;
+    fn commit_all(&self, message: &str) -> Result<git2::Oid, GitError>;
+    fn remove_all_remotes(&self) -> Result<(), GitError>;
 }
 
 impl GdCliRepository for Repository {
-    fn commit_all(&self, message: &str) -> Result<git2::Oid> {
+    fn commit_all(&self, message: &str) -> Result<git2::Oid, GitError> {
         let mut index = self.index()?;
         index.add_all(["*"].iter(), IndexAddOption::DEFAULT, None)?;
         index.write()?;
@@ -53,7 +54,18 @@ impl GdCliRepository for Repository {
             &tree,
             &parents,
         )
-        .map_err(|e| format!("Failed to commit: {e}").into())
+        .map_err(GitError::Git2)
+    }
+
+    fn remove_all_remotes(&self) -> Result<(), GitError> {
+        for remote in self.remotes()?.iter() {
+            let remote = remote?;
+            if let Some(name) = remote {
+                self.remote_delete(name)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -72,11 +84,11 @@ pub fn clone(
     dest: &Path,
     branch: Option<&str>,
     progress: RepositoryProgressBar,
-) -> Result<Repository> {
+) -> Result<Repository, GitError> {
     let mut callbacks: RemoteCallbacks = match classify_url(url) {
         UrlKind::Http => http_callbacks(),
         UrlKind::Ssh => ssh_callbacks(),
-        UrlKind::Invalid => return Err(format!("Invalid template url: '{}'", url).into()),
+        UrlKind::Invalid => return Err(GitError::InvalidUrl(url.into())),
     };
 
     callbacks.transfer_progress(|stats| {
@@ -98,7 +110,7 @@ fn http_callbacks<'a>() -> RemoteCallbacks<'a> {
     let mut callbacks = RemoteCallbacks::new();
     callbacks.credentials(move |_url, _username_from_url, _allowed_types| {
         if let Ok(token) = &token {
-            Cred::userpass_plaintext("", &token)
+            Cred::userpass_plaintext("", token)
         } else {
             log::warn!("An HTTP URL was provided, but the GITHUB_TOKEN environment variable is empty. If the repository is private, it cannot be cloned");
             Cred::userpass_plaintext("", "")
@@ -117,7 +129,10 @@ fn ssh_callbacks<'a>() -> RemoteCallbacks<'a> {
     callbacks
 }
 
-fn init_submodules(repository: &Repository, progress_bar: &RepositoryProgressBar) -> Result<()> {
+fn init_submodules(
+    repository: &Repository,
+    progress_bar: &RepositoryProgressBar,
+) -> Result<(), GitError> {
     for mut submodule in repository.submodules()? {
         let spb = progress_bar.new_submodule_progress_bar(&submodule);
 
@@ -135,9 +150,9 @@ fn init_submodules(repository: &Repository, progress_bar: &RepositoryProgressBar
 
         submodule
             .update(true, Some(&mut update_opts))
-            .map_err(|e| -> Box<dyn Error> {
-                let name = submodule.name().unwrap_or("missing_name");
-                format!("Failed to initialize submodule {}: {}", name, e.message()).into()
+            .map_err(|e| GitError::SubmoduleInitializationFailed {
+                name: submodule.name().unwrap_or("missing_name").into(),
+                source: e,
             })?;
         spb.finish();
     }
@@ -153,7 +168,7 @@ fn create_builder<'a>(callbacks: RemoteCallbacks<'a>, branch: Option<&str>) -> R
     let mut builder = RepoBuilder::new();
     builder.fetch_options(fo);
     if let Some(branch) = branch {
-        builder.branch(&branch);
+        builder.branch(branch);
     }
 
     builder
