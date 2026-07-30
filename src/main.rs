@@ -1,16 +1,20 @@
+use std::process::ExitCode;
+
 use clap::Parser;
 
 use gdcli::cli::extension::ExtensionCommands;
 use gdcli::cli::game::GameCommands;
 use gdcli::cli::{Cli, Commands, build, completions, extension, game, info};
-use gdcli::error::Result;
+use gdcli::error::{Error, Result};
 
-fn main() -> Result<()> {
+fn main() -> ExitCode {
     env_logger::init();
     let cli = Cli::parse();
 
-    run(cli)?;
-    Ok(())
+    match run(cli) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => handle_error(e),
+    }
 }
 
 fn run(cli: Cli) -> Result<()> {
@@ -25,4 +29,14 @@ fn run(cli: Cli) -> Result<()> {
         Commands::Info { path } => info::inspect(path),
         Commands::Build { path, args } => build::handle(path, args),
     }
+}
+
+fn handle_error(e: Error) -> ExitCode {
+    eprintln!("{e}");
+    let mut source = std::error::Error::source(&e);
+    while let Some(s) = source {
+        eprintln!("\tCaused by: {s}");
+        source = s.source();
+    }
+    ExitCode::FAILURE
 }
