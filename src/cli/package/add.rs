@@ -1,3 +1,5 @@
+//! Add a package to a project.
+
 use clap::Parser;
 
 use crate::error::Result;
@@ -7,6 +9,6 @@ pub struct AddArgs {
     pub name: String,
 }
 
-pub fn add(args: AddArgs) -> Result<()> {
+pub fn add(_args: AddArgs) -> Result<()> {
     Ok(())
 }

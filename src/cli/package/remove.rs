@@ -7,6 +7,6 @@ pub struct RemoveArgs {
     pub name: String,
 }
 
-pub fn remove(args: RemoveArgs) -> Result<()> {
+pub fn remove(_args: RemoveArgs) -> Result<()> {
     Ok(())
 }

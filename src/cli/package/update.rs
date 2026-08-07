@@ -7,6 +7,6 @@ pub struct UpdateArgs {
     pub name: Option<String>,
 }
 
-pub fn update(args: UpdateArgs) -> Result<()> {
+pub fn update(_args: UpdateArgs) -> Result<()> {
     Ok(())
 }

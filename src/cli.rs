@@ -41,6 +41,7 @@ pub enum Commands {
         #[command(subcommand)]
         action: GameCommands,
     },
+    #[command(alias = "pkg")]
     Package {
         #[command(subcommand)]
         action: PackageCommand,
