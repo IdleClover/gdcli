@@ -11,7 +11,10 @@ use clap::{Args, Parser, Subcommand};
 use clap_complete::Shell;
 
 use crate::{
-    cli::{build::BuildArgs, game::GameCommands, gdextension::GdextensionCommands},
+    cli::{
+        build::BuildArgs, game::GameCommands, gdextension::GdextensionCommands,
+        package::PackageCommand,
+    },
     error::project::{NewError, ProjectError},
 };
 
@@ -37,6 +40,10 @@ pub enum Commands {
     Game {
         #[command(subcommand)]
         action: GameCommands,
+    },
+    Package {
+        #[command(subcommand)]
+        action: PackageCommand,
     },
     Completions {
         shell: Option<Shell>,

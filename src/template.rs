@@ -1,4 +1,4 @@
-pub mod extension;
+pub mod gdextension;
 
 use std::{fs, path::PathBuf};
 

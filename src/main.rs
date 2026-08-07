@@ -3,7 +3,7 @@ use std::process::ExitCode;
 use clap::Parser;
 
 use gdcli::cli::game::GameCommands;
-use gdcli::cli::{Cli, Commands, build, completions, game, gdextension, info};
+use gdcli::cli::{Cli, Commands, build, completions, game, gdextension, info, package};
 use gdcli::error::{Error, Result};
 
 fn main() -> ExitCode {
@@ -25,6 +25,7 @@ fn run(cli: Cli) -> Result<()> {
         Commands::Completions { shell, install } => completions::handle(shell, install),
         Commands::Info { path } => info::inspect(path),
         Commands::Build { path, args } => build::handle(path, args),
+        Commands::Package { action } => package::run(action),
     }
 }
 

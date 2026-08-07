@@ -6,7 +6,7 @@ use crate::{
     error::Result,
     git,
     project::{HasProject, Project, ProjectLike, file::ProjectFile},
-    template::{extension::GdextensionTemplate, replace_in_files},
+    template::{gdextension::GdextensionTemplate, replace_in_files},
     ui::RepositoryProgressBar,
 };
 
