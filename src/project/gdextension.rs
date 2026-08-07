@@ -6,36 +6,38 @@ use crate::{
     error::Result,
     git,
     project::{HasProject, Project, ProjectLike, file::ProjectFile},
-    template::{extension::ExtensionTemplate, replace_in_files},
+    template::{extension::GdextensionTemplate, replace_in_files},
     ui::RepositoryProgressBar,
 };
 
 #[derive(Serialize, Deserialize)]
-pub struct GdextProject {
+pub struct GdextensionProject {
     #[serde(rename = "project")]
     pub base: Project,
-    pub target: GdextTarget,
+    pub target: GdextensionTarget,
+    pub platforms: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default, clap::ValueEnum)]
 #[serde(rename_all = "snake_case")]
-pub enum GdextTarget {
+pub enum GdextensionTarget {
     Editor,
     #[default]
     Runtime,
     Both,
 }
 
-impl GdextProject {
-    fn new(name: String, folder: &Path, target: GdextTarget) -> Self {
-        GdextProject {
+impl GdextensionProject {
+    fn new(name: String, folder: &Path, target: GdextensionTarget) -> Self {
+        GdextensionProject {
             base: Project::new(name, folder),
             target,
+            platforms: vec!["linux".into()],
         }
     }
 }
 
-impl HasProject for GdextProject {
+impl HasProject for GdextensionProject {
     fn base(&self) -> &Project {
         &self.base
     }
@@ -47,7 +49,7 @@ impl HasProject for GdextProject {
     fn post_installation(&self) -> Result<()> {
         replace_in_files(&self.repository()?, &[("EXTENSION-NAME", self.name())])?;
 
-        let mut template = ExtensionTemplate::open(self.dir().to_path_buf())?;
+        let mut template = GdextensionTemplate::open(self.dir().to_path_buf())?;
         template.rename_gdextension_file(self.name())?;
         template.save()
     }
@@ -63,7 +65,7 @@ pub fn create(
     dest: &Path,
     name: String,
     version: Option<&str>,
-    target: GdextTarget,
+    target: GdextensionTarget,
 ) -> Result<ProjectFile> {
     git::clone(
         url,
@@ -71,5 +73,5 @@ pub fn create(
         version,
         RepositoryProgressBar::new(url.to_string()),
     )?;
-    Ok(GdextProject::new(name, dest, target).into())
+    Ok(GdextensionProject::new(name, dest, target).into())
 }

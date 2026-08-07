@@ -1,6 +1,6 @@
 pub mod file;
 pub mod game;
-pub mod gdext;
+pub mod gdextension;
 
 use std::path::{Path, PathBuf};
 

@@ -13,7 +13,7 @@ pub struct BuildArgs {
 
     #[arg(
         long = "compile-command",
-        default_value_t = true,
+        default_value_t = false,
         help = "Extension only"
     )]
     pub extension_compile_command: bool,

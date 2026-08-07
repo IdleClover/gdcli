@@ -1,6 +1,6 @@
-pub mod extension;
 pub mod fs;
 pub mod game;
+pub mod gdextension;
 pub mod git;
 pub mod path;
 pub mod project;
@@ -10,7 +10,7 @@ pub mod toml;
 use thiserror::Error;
 
 use crate::error::{
-    extension::ExtensionError, fs::FsError, game::GameError, git::GitError, path::PathError,
+    fs::FsError, game::GameError, gdextension::GdextensionError, git::GitError, path::PathError,
     project::ProjectError, shell::ShellError, toml::TomlError,
 };
 
@@ -22,7 +22,7 @@ pub enum Error {
     Game(#[from] GameError),
 
     #[error(transparent)]
-    Extension(#[from] ExtensionError),
+    Gdextension(#[from] GdextensionError),
 
     #[error(transparent)]
     Project(#[from] ProjectError),

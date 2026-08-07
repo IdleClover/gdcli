@@ -7,13 +7,13 @@ use crate::error::{Result, fs::FsError, toml::TomlError};
 const TEMPLATE_FILENAME: &str = "template.toml";
 
 #[derive(Serialize, Deserialize)]
-pub struct ExtensionTemplate {
+pub struct GdextensionTemplate {
     #[serde(skip)]
     pub path: PathBuf,
     pub gdextension_path: PathBuf,
 }
 
-impl ExtensionTemplate {
+impl GdextensionTemplate {
     pub fn open(mut path: PathBuf) -> Result<Self> {
         if path.is_dir() {
             path.push(TEMPLATE_FILENAME);
@@ -22,7 +22,7 @@ impl ExtensionTemplate {
             path: path.clone(),
             source: e,
         })?;
-        let mut template: ExtensionTemplate =
+        let mut template: GdextensionTemplate =
             toml::from_str(&content).map_err(TomlError::DeserializationFailed)?;
 
         template.path = path;

@@ -1,8 +1,9 @@
 pub mod build;
 pub mod completions;
-pub mod extension;
 pub mod game;
+pub mod gdextension;
 pub mod info;
+pub mod package;
 
 use std::{env, path::PathBuf};
 
@@ -10,7 +11,7 @@ use clap::{Args, Parser, Subcommand};
 use clap_complete::Shell;
 
 use crate::{
-    cli::{build::BuildArgs, extension::ExtensionCommands, game::GameCommands},
+    cli::{build::BuildArgs, game::GameCommands, gdextension::GdextensionCommands},
     error::project::{NewError, ProjectError},
 };
 
@@ -31,7 +32,7 @@ pub enum Commands {
     #[command(alias = "ext")]
     Extension {
         #[command(subcommand)]
-        action: ExtensionCommands,
+        action: GdextensionCommands,
     },
     Game {
         #[command(subcommand)]

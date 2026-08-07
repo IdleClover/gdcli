@@ -1,22 +1,33 @@
+pub mod platform;
+
 use crate::{
-    cli::NewArgs,
+    cli::{NewArgs, gdextension::platform::PlatformArgs},
     error::Result,
     project::{
         HasProject, ProjectLike,
-        gdext::{self, GdextTarget},
+        gdextension::{self, GdextensionTarget},
     },
 };
 use clap::{Args, Parser, Subcommand};
 
+pub fn run(action: GdextensionCommands) -> Result<()> {
+    match action {
+        GdextensionCommands::New(args) => new(args),
+        GdextensionCommands::Platform(args) => platform::run(args),
+    }
+}
+
 #[derive(Subcommand, Debug)]
-pub enum ExtensionCommands {
-    New(ExtensionNewArgs),
+pub enum GdextensionCommands {
+    New(GdextensionNewArgs),
+    Platform(PlatformArgs),
 }
 
 #[derive(Parser, Debug)]
-pub struct ExtensionNewArgs {
+pub struct GdextensionNewArgs {
     #[command(flatten)]
     pub common: NewArgs,
+
     #[command(flatten)]
     pub target: TargetArgs,
 }
@@ -36,20 +47,20 @@ pub struct TargetArgs {
 }
 
 impl TargetArgs {
-    pub fn resolve(&self) -> GdextTarget {
+    pub fn resolve(&self) -> GdextensionTarget {
         if self.editor {
-            GdextTarget::Editor
+            GdextensionTarget::Editor
         } else if self.both {
-            GdextTarget::Both
+            GdextensionTarget::Both
         } else {
             // Default
-            GdextTarget::Runtime
+            GdextensionTarget::Runtime
         }
     }
 }
 
-pub fn new(args: ExtensionNewArgs) -> Result<()> {
-    let project = gdext::create(
+pub fn new(args: GdextensionNewArgs) -> Result<()> {
+    let project = gdextension::create(
         &args.common.template,
         &args.common.get_path()?,
         args.common.name,

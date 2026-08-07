@@ -6,7 +6,8 @@ use crate::{
     cli::build::BuildArgs,
     error::{Error, Result, fs::FsError, toml::TomlError},
     project::{
-        HasProject, PROJECT_FILENAME, Project, ProjectLike, game::GameProject, gdext::GdextProject,
+        HasProject, PROJECT_FILENAME, Project, ProjectLike, game::GameProject,
+        gdextension::GdextensionProject,
     },
 };
 
@@ -14,7 +15,7 @@ use crate::{
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ProjectFile {
     Game(GameProject),
-    Extension(GdextProject),
+    Gdextension(GdextensionProject),
 }
 
 impl ProjectFile {
@@ -32,7 +33,7 @@ macro_rules! dispatch {
     ($self:ident.$method:ident($($arg:expr),*)) => {
         match $self {
             ProjectFile::Game(p) => p.$method($($arg),*),
-            ProjectFile::Extension(p) => p.$method($($arg),*),
+            ProjectFile::Gdextension(p) => p.$method($($arg),*),
         }
     };
 }
@@ -88,8 +89,8 @@ impl From<GameProject> for ProjectFile {
     }
 }
 
-impl From<GdextProject> for ProjectFile {
-    fn from(value: GdextProject) -> Self {
-        Self::Extension(value)
+impl From<GdextensionProject> for ProjectFile {
+    fn from(value: GdextensionProject) -> Self {
+        Self::Gdextension(value)
     }
 }
