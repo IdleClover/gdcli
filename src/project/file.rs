@@ -22,7 +22,7 @@ impl ProjectFile {
     pub fn save(&self) -> Result<()> {
         let toml = toml::to_string(&self).map_err(TomlError::SerializationFailed)?;
         fs::write(self.path(), toml).map_err(|e| FsError::WriteFailed {
-            path: self.path().clone(),
+            path: self.path().to_path_buf(),
             source: e,
         })?;
         Ok(())

@@ -12,10 +12,11 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 pub struct GdextensionProject {
-    #[serde(rename = "project")]
-    pub base: Project,
     pub target: GdextensionTarget,
     pub platforms: Vec<String>,
+
+    #[serde(rename = "project")]
+    pub base: Project,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default, clap::ValueEnum)]
@@ -30,9 +31,9 @@ pub enum GdextensionTarget {
 impl GdextensionProject {
     fn new(name: String, folder: &Path, target: GdextensionTarget) -> Self {
         GdextensionProject {
-            base: Project::new(name, folder),
             target,
             platforms: vec!["linux".into()],
+            base: Project::new(name, folder),
         }
     }
 }

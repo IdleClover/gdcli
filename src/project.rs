@@ -23,7 +23,7 @@ pub struct Project {
 }
 
 pub trait ProjectLike {
-    fn path(&self) -> &PathBuf;
+    fn path(&self) -> &Path;
     fn name(&self) -> &str;
 
     fn dir(&self) -> &Path {
@@ -32,8 +32,11 @@ pub trait ProjectLike {
 
     fn repository(&self) -> Result<Repository> {
         let path = self.path();
-        let repository = Repository::open(path.parent().ok_or(PathError::NoParent(path.clone()))?)
-            .map_err(GitError::from)?;
+        let repository = Repository::open(
+            path.parent()
+                .ok_or(PathError::NoParent(path.to_path_buf()))?,
+        )
+        .map_err(GitError::from)?;
         Ok(repository)
     }
 
@@ -64,7 +67,7 @@ impl Project {
 }
 
 impl ProjectLike for Project {
-    fn path(&self) -> &PathBuf {
+    fn path(&self) -> &Path {
         &self.path
     }
 
@@ -74,7 +77,7 @@ impl ProjectLike for Project {
 }
 
 impl<T: HasProject> ProjectLike for T {
-    fn path(&self) -> &PathBuf {
+    fn path(&self) -> &Path {
         self.base().path()
     }
 

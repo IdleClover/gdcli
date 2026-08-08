@@ -3,6 +3,7 @@ pub mod platform;
 use crate::{
     cli::{NewArgs, gdextension::platform::PlatformArgs},
     error::Result,
+    package::Package,
     project::{
         HasProject, ProjectLike,
         gdextension::{self, GdextensionTarget},
@@ -60,16 +61,22 @@ impl TargetArgs {
 }
 
 pub fn new(args: GdextensionNewArgs) -> Result<()> {
+    let name = args.common.name.clone();
+    let path = args.common.get_path()?;
+
     let project = gdextension::create(
         &args.common.template,
-        &args.common.get_path()?,
-        args.common.name,
+        &path,
+        name.clone(),
         args.common.version.as_deref(),
         args.target.resolve(),
     )?;
     project.post_installation()?;
     project.save()?;
-    project.commit_all("Setup extension project")?;
 
+    let pkg = Package::new(name, &path);
+    pkg.save()?;
+
+    project.commit_all("Setup extension project")?;
     Ok(())
 }
