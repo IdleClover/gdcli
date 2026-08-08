@@ -93,7 +93,7 @@ fn build_callbacks<'a>(url: &UrlKind) -> Result<RemoteCallbacks<'a>, GitError> {
     match url {
         UrlKind::Http(_) => Ok(http_callbacks()),
         UrlKind::Ssh(_) => Ok(ssh_callbacks()),
-        UrlKind::Invalid(_) => Err(GitError::InvalidUrl(url.clone()).into()),
+        UrlKind::Invalid(_) => Err(GitError::InvalidUrl(url.clone())),
     }
 }
 

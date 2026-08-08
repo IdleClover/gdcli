@@ -31,11 +31,11 @@ impl InitArgs {
         let path = PathBuf::from(working_directory()).join(path);
 
         if !path.exists() {
-            return Err(NewError::PathNotFound(path).into());
+            return Err(NewError::PathNotFound(path));
         }
 
         if !path.is_dir() {
-            return Err(NewError::NotADirectory(path).into());
+            return Err(NewError::NotADirectory(path));
         }
 
         Ok(path)
