@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::url::UrlKind;
+
 #[derive(Debug, Error)]
 pub enum GitError {
     #[error(transparent)]
@@ -9,7 +11,7 @@ pub enum GitError {
     BareRepository,
 
     #[error("The repository URL '{0}' is invalid")]
-    InvalidUrl(String),
+    InvalidUrl(UrlKind),
 
     #[error("Failed to initialize submodule '{name}'")]
     SubmoduleInitializationFailed {

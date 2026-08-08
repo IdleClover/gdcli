@@ -5,7 +5,7 @@ pub mod gdextension;
 pub mod info;
 pub mod package;
 
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
 use clap_complete::Shell;
@@ -16,13 +16,8 @@ use crate::{
         package::PackageCommand,
     },
     error::project::{NewError, ProjectError},
+    working_directory,
 };
-
-fn working_directory() -> String {
-    env::current_dir()
-        .map(|p| p.display().to_string())
-        .unwrap_or_else(|_| ".".into())
-}
 
 #[derive(Parser, Debug)]
 pub struct Cli {

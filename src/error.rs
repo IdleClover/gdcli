@@ -2,6 +2,7 @@ pub mod fs;
 pub mod game;
 pub mod gdextension;
 pub mod git;
+pub mod package;
 pub mod path;
 pub mod project;
 pub mod shell;
@@ -10,8 +11,9 @@ pub mod toml;
 use thiserror::Error;
 
 use crate::error::{
-    fs::FsError, game::GameError, gdextension::GdextensionError, git::GitError, path::PathError,
-    project::ProjectError, shell::ShellError, toml::TomlError,
+    fs::FsError, game::GameError, gdextension::GdextensionError, git::GitError,
+    package::PackageError, path::PathError, project::ProjectError, shell::ShellError,
+    toml::TomlError,
 };
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -26,6 +28,9 @@ pub enum Error {
 
     #[error(transparent)]
     Project(#[from] ProjectError),
+
+    #[error(transparent)]
+    Package(#[from] PackageError),
 
     #[error(transparent)]
     Path(#[from] PathError),

@@ -2,7 +2,7 @@ pub mod platform;
 
 use crate::{
     cli::{NewArgs, gdextension::platform::PlatformArgs},
-    error::Result,
+    error::{Result, package::PackageError},
     package::Package,
     project::{
         HasProject, ProjectLike,
@@ -74,7 +74,7 @@ pub fn new(args: GdextensionNewArgs) -> Result<()> {
     project.post_installation()?;
     project.save()?;
 
-    let pkg = Package::new(name, &path);
+    let pkg = Package::create(name, &path).map_err(PackageError::from)?;
     pkg.save()?;
 
     project.commit_all("Setup extension project")?;

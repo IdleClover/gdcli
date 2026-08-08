@@ -5,15 +5,13 @@ use git2::{
     SubmoduleUpdateOptions, build::RepoBuilder,
 };
 
-use crate::{error::git::GitError, ui::RepositoryProgressBar};
+use crate::{
+    error::git::GitError,
+    ui::RepositoryProgressBar,
+    url::{UrlKind, classify_url},
+};
 
 const DEPTH: i32 = 1;
-
-enum UrlKind {
-    Http,
-    Ssh,
-    Invalid,
-}
 
 pub trait CloneProgress {
     fn on_transfer(&self, stats: Progress);
@@ -69,39 +67,34 @@ impl GdCliRepository for Repository {
     }
 }
 
-fn classify_url(url: &str) -> UrlKind {
-    if url.starts_with("http://") || url.starts_with("https://") {
-        UrlKind::Http
-    } else if url.starts_with("git@") || url.starts_with("ssh://") {
-        UrlKind::Ssh
-    } else {
-        UrlKind::Invalid
-    }
-}
-
 pub fn clone(
     url: &str,
     dest: &Path,
     branch: Option<&str>,
     progress: RepositoryProgressBar,
 ) -> Result<Repository, GitError> {
-    let mut callbacks: RemoteCallbacks = match classify_url(url) {
-        UrlKind::Http => http_callbacks(),
-        UrlKind::Ssh => ssh_callbacks(),
-        UrlKind::Invalid => return Err(GitError::InvalidUrl(url.into())),
-    };
+    let url = classify_url(url);
+    let mut callbacks: RemoteCallbacks = build_callbacks(&url)?;
 
     callbacks.transfer_progress(|stats| {
         progress.on_transfer(stats);
         true
     });
 
-    let repository = create_builder(callbacks, branch).clone(url, dest)?;
+    let repository = create_builder(callbacks, branch).clone(url.url(), dest)?;
     progress.finish();
 
     init_submodules(&repository, &progress)?;
 
     Ok(repository)
+}
+
+fn build_callbacks<'a>(url: &UrlKind) -> Result<RemoteCallbacks<'a>, GitError> {
+    match url {
+        UrlKind::Http(_) => Ok(http_callbacks()),
+        UrlKind::Ssh(_) => Ok(ssh_callbacks()),
+        UrlKind::Invalid(_) => Err(GitError::InvalidUrl(url.clone()).into()),
+    }
 }
 
 fn http_callbacks<'a>() -> RemoteCallbacks<'a> {

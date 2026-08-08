@@ -1,12 +1,12 @@
 use std::{
-    fs,
+    fmt, fs,
     path::{Path, PathBuf},
 };
 
 use semver::Version;
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Result, fs::FsError, toml::TomlError};
+use crate::error::{Result, fs::FsError, package::NewError, toml::TomlError};
 
 const PACKAGE_FILENAME: &str = "package.gdcli";
 
@@ -19,12 +19,17 @@ pub struct Package {
 }
 
 impl Package {
-    pub fn new(name: String, folder: &Path) -> Self {
-        Self {
-            name,
-            path: folder.join(PACKAGE_FILENAME),
-            version: Version::new(0, 1, 0),
+    pub fn create(name: String, folder: &Path) -> core::result::Result<Self, NewError> {
+        let path = folder.join(PACKAGE_FILENAME);
+        if path.exists() {
+            return Err(NewError::AlreadyExists(path));
         }
+
+        Ok(Self {
+            name,
+            path,
+            version: Version::new(0, 1, 0),
+        })
     }
 
     pub fn path(&self) -> &Path {
@@ -38,5 +43,11 @@ impl Package {
             source: e,
         })?;
         Ok(())
+    }
+}
+
+impl fmt::Display for Package {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} (v{})", self.name, self.version)
     }
 }
