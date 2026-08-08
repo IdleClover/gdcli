@@ -65,7 +65,7 @@ pub struct NewArgs {
     pub path: String,
 
     #[arg(short, long)]
-    pub version: Option<String>,
+    pub branch: Option<String>,
 
     #[arg(
         short,

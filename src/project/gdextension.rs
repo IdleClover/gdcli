@@ -65,13 +65,13 @@ pub fn create(
     url: &str,
     dest: &Path,
     name: String,
-    version: Option<&str>,
+    branch: Option<&str>,
     target: GdextensionTarget,
 ) -> Result<ProjectFile> {
     git::clone(
         url,
         dest,
-        version,
+        branch,
         RepositoryProgressBar::new(url.to_string()),
     )?;
     Ok(GdextensionProject::new(name, dest, target).into())

@@ -68,7 +68,7 @@ pub fn new(args: GdextensionNewArgs) -> Result<()> {
         &args.common.template,
         &path,
         name.clone(),
-        args.common.version.as_deref(),
+        args.common.branch.as_deref(),
         args.target.resolve(),
     )?;
     project.post_installation()?;
